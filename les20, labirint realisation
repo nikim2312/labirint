@@ -1,0 +1,250 @@
+
+#include <iostream>
+#include<string>
+#include<fstream>
+#include "Header.h"
+using namespace std;
+
+#define M 10
+#define N 10
+class Pers
+{
+public:
+    int x;
+    int y;
+    Stack track;
+    bool isExit(int x, int y)
+    {
+        if (x == 0 || x == M - 1 || y == 0 || y == N - 1)
+            return true;
+        else
+            return false;
+    }
+
+    // Функция для выполнения поиска в глубину
+    bool Dfs(int**& matr, int x, int y)
+    {
+        // Проверяем, достигли ли мы выхода из лабиринта
+        if (isExit(x, y))
+        {
+            matr[y][x] = 8;
+            return true;
+        }
+        
+        // Помечаем текущую клетку как посещенную
+        if (matr[y][x] != 2)
+            track.Push(y, x);
+        matr[y][x] = 2; // Предположим, что 2 обозначает посещенную клетку
+        // Массивы для определения смещения в различные направления
+        int dx[] = { 0, 1, 0, -1 }; // Смещения по горизонтали (вправо, вниз, влево, вверх)
+        int dy[] = { 1, 0, -1, 0 }; // Смещения по вертикали
+        bool neigh = false;
+        // Пробуем двигаться во всех направлениях
+        for (int i = 0; i < 4; ++i)
+        {
+            int nx = x + dx[i];
+            int ny = y + dy[i];
+
+            // Проверяем, что новые координаты находятся в пределах матрицы и клетка не является стеной
+            if (nx >= 0 && nx < M && ny >= 0 && ny < N && matr[ny][nx] == 0)
+            {
+                // Рекурсивно вызываем DFS для следующей клетки
+                neigh = true;
+                return Dfs(matr, nx, ny);
+            }
+        }
+        if (neigh == false && !track.IsEmpty() && track.Count() > 1)
+        {
+            track.Pop();
+            Element* two = track.Back_el();
+            int y1;
+            y1 = two->data;
+            int x1;
+            x1 = two->x;
+            return Dfs(matr, x1, y1);
+        }
+        if(neigh == false && !track.IsEmpty() && track.Count() == 1)
+            return false;
+    }
+};
+
+
+//поиск в глубину / поиск в ширину (BFS)
+
+int** matrix()
+{
+    
+    int** matr;
+    matr = new int* [M];
+    for (int i = 0; i < M; i++)
+    {
+        matr[i] = new int[N];
+    }
+    for (int i = 0; i < M; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+            matr[i][j] = rand() % 2;
+        }
+    }
+    return matr;
+}
+void Print(int** matr)
+{
+    for (int h = 0; h < M + 2; h++)
+    {
+        cout << 0;
+    }
+    cout << endl;
+    for (int i = 0; i < N; i++)
+    {
+        cout << 0;
+        for (int j = 0; j < M; j++)
+        {
+            if (matr[i][j] == 1)
+                cout << '#';
+            else if (matr[i][j] == 0)
+                cout << ' ';
+            else if (matr[i][j] == 5)
+                cout << '@';
+            else if (matr[i][j] == 2)
+                cout << '.';
+            else if (matr[i][j] == 8)
+            {
+                cout << 'W';
+            }
+        }
+        cout <<  0;
+        cout << endl;
+    }
+    for (int t = 0; t < M + 2; t++)
+    {
+        cout << 0;
+    }
+}
+void Cut(int**& matr, int a, int b)
+{
+    if (matr[a][b] == 1)
+        matr[a][b] = 0;
+    else if (matr[a][b] == 0)
+        matr[a][b] = 1;
+    system("cls");
+    Print(matr);
+}
+void Save(int**& matr)
+{
+    string filename = "C:/Users/user/source/repos/les20/field.txt";
+    ofstream fl(filename);
+    if (!fl.is_open())
+    {
+        cout << "Error of file opening";
+        return;
+    }
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = 0; j < M; j++)
+        {
+            fl << matr[i][j] << " ";
+        }
+        fl << endl;
+    }
+    fl.close();
+
+}
+void Load(int**& matr)
+{
+    ifstream fl("C:/Users/user/source/repos/les20/field.txt");
+    if (!fl.is_open()) {
+        cout << "Error of opening file for reading!";
+        return;
+    }
+    while (!fl.eof())
+    {
+        for (int i = 0; i < N; i++)
+        {
+            for (int j = 0; j < M; j++)
+            {
+                fl >> matr[i][j];
+            }
+        }
+    }
+    fl.close();
+    Print(matr);
+}
+void Game(int**& matr)
+{
+    bool stop = false;
+    while (stop == false)
+    {
+        int a, b;
+        string dir;
+        cin >> dir;
+        if (dir == "s")
+        {
+            Save(matr);
+        }
+        else if (dir == "l")
+        {
+            system("cls");
+            Load(matr);
+        }
+        else if (dir == "en")
+        {
+            stop = true;
+        }
+        else if (dir == "pl")
+        {
+            Pers one;
+            cin >> a;
+            cin >> b;
+            one.x = b;
+            one.y = a;
+            if (matr[a][b] != 1)
+            {
+                matr[a][b] = 5;
+                system("cls");
+                Print(matr);
+                if (one.Dfs(matr, b, a))
+                {
+                    system("cls");
+                    Print(matr);
+                    cout << endl << "exit";
+                }
+                else
+                {
+                    system("cls");
+                    Print(matr);
+                    cout << endl << "no exit";
+                }
+                    
+
+            }
+                
+
+        }
+        else 
+        {
+            a = stoi(dir);
+            cin >> b;
+            Cut(matr, a, b);
+        }
+    }
+}
+//1. редактирование
+//2. сохранение поля в файл по написанию слова save (файл один и тот же field.txt)
+//3. загрузка поля из файла по написанию load  (файл один и тот же field.txt)
+//4. спросить две координаты, чтобы разместить на этих координатах (если они пустые) персонажа
+//5. Найти ЛЮБОЙ выход из лабиринта из точки, в которой стоит персонаж. Если нет выхода для персонажа - выхода нет.
+//Выход - любая пустая клетка на границе
+
+
+int main()
+{
+    srand(time(NULL));
+    int** matr = matrix();
+    Print(matr);
+    Game(matr);
+    return 0;
+}
+
+
